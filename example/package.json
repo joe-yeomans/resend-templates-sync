@@ -1,0 +1,16 @@
+{
+  "name": "resend-templates-sync-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "tsx sync.ts"
+  },
+  "dependencies": {
+    "@react-email/components": "1.0.1",
+    "dotenv": "^16.4.7",
+    "react": "19.2.0",
+    "resend": "^6.5.2",
+    "resend-templates-sync": "file:..",
+    "tsx": "^4.0.0"
+  }
+}

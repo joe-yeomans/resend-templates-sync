@@ -1,0 +1,52 @@
+{
+  "name": "resend-templates-sync",
+  "version": "1.0.0",
+  "description": "Sync React Email templates to Resend",
+  "keywords": [
+    "email",
+    "react-email",
+    "resend",
+    "sync",
+    "templates"
+  ],
+  "license": "MIT",
+  "author": "Joe Yeomans",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint . && oxfmt --check .",
+    "lint:fix": "oxlint --fix . && oxfmt --write .",
+    "format": "oxfmt --write .",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@react-email/render": "2.0.0",
+    "react-dom": "19.2.0",
+    "resend": "^6.5.2"
+  },
+  "devDependencies": {
+    "@react-email/components": "1.0.1",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "oxfmt": "^0.50.0",
+    "oxlint": "^1.65.0",
+    "react-email": "5.0.5",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "react": "19.2.0"
+  }
+}
