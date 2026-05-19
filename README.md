@@ -2,7 +2,11 @@
 
 Sync React Email components to Resend templates.
 
-Use this when you want template definitions to live in source control instead of manually copying HTML into the Resend dashboard.
+This package is for apps that want to use React Email but do not have a TypeScript or React runtime in the backend.
+
+For example, a Rails, Laravel, Django, Phoenix, Go, or .NET backend can send Resend template emails while the templates themselves live in a small TypeScript project. Run `resend-templates-sync` as a build, deploy, or release step, then send emails from your backend using Resend template IDs, aliases, and variables.
+
+No rendering React inside your backend. No checked-in generated HTML. No custom script glued to your application runtime.
 
 ## Installation
 
@@ -12,6 +16,8 @@ npm install resend-templates-sync
 
 ## Usage
 
+Create your email templates with React Email, then sync them to Resend:
+
 ```tsx
 import { Resend } from "resend";
 import { sync } from "resend-templates-sync";
@@ -20,29 +26,29 @@ import WelcomeEmail from "./emails/welcome";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const result = await sync(
-  {
-    resend,
-    publish: false,
-  },
-  [
     {
-      name: "Welcome Email",
-      alias: "welcome-email",
-      component: WelcomeEmail,
-      props: {
-        name: "Ada",
-      },
-      subject: "Welcome to Acme",
-      from: "Acme <hello@acme.com>",
-      variables: [
-        {
-          key: "CUSTOMER_NAME",
-          type: "string",
-          fallbackValue: "there",
-        },
-      ],
+        resend,
+        publish: false,
     },
-  ],
+    [
+        {
+            name: "Welcome Email",
+            alias: "welcome-email",
+            component: WelcomeEmail,
+            props: {
+                name: "Ada",
+            },
+            subject: "Welcome to Acme",
+            from: "Acme <hello@acme.com>",
+            variables: [
+                {
+                    key: "CUSTOMER_NAME",
+                    type: "string",
+                    fallbackValue: "there",
+                },
+            ],
+        },
+    ],
 );
 
 console.log(result.created);
@@ -51,11 +57,33 @@ console.log(result.published);
 console.log(result.errors);
 ```
 
+After syncing, your backend can send email through Resend using the template alias and variables, without needing to know anything about React Email.
+
+For example, any backend that can make an HTTP request can send the published template:
+
+```bash
+curl -X POST "https://api.resend.com/emails" \
+  -H "Authorization: Bearer re_xxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "Acme <hello@acme.com>",
+    "to": ["user@example.com"],
+    "template": {
+      "id": "welcome-email",
+      "variables": {
+        "CUSTOMER_NAME": "Ada"
+      }
+    }
+  }'
+```
+
+`template.id` can be the published template ID or alias. When sending with a template, do not also send `html`, `text`, or `react`.
+
 ## API
 
 ### `sync(options, templates)`
 
-Creates or updates Resend templates from React Email components.
+Creates or updates Resend templates from React Email components. This is usually run from a TypeScript script in CI, during deployment, or manually before releasing backend changes that depend on new email templates.
 
 ```ts
 await sync(options, templates);
@@ -65,8 +93,8 @@ await sync(options, templates);
 
 ```ts
 interface SyncOptions {
-  resend: Resend;
-  publish?: boolean | "created" | "updated" | "all";
+    resend: Resend;
+    publish?: boolean | "created" | "updated" | "all";
 }
 ```
 
@@ -84,15 +112,15 @@ Publish behavior:
 
 ```ts
 interface TemplateConfig<Props = Record<string, unknown>> {
-  name: string;
-  component: ComponentType<Props>;
-  props?: Props;
-  subject?: string;
-  text?: string;
-  alias?: string;
-  from?: string;
-  replyTo?: string[] | string;
-  variables?: TemplateVariable[];
+    name: string;
+    component: ComponentType<Props>;
+    props?: Props;
+    subject?: string;
+    text?: string;
+    alias?: string;
+    from?: string;
+    replyTo?: string[] | string;
+    variables?: TemplateVariable[];
 }
 ```
 
@@ -102,32 +130,32 @@ Templates are matched by `alias` when provided, then by `name`.
 
 ```ts
 type TemplateVariable =
-  | {
-      key: string;
-      type: "string";
-      fallbackValue?: string | null;
-    }
-  | {
-      key: string;
-      type: "number";
-      fallbackValue?: number | null;
-    };
+    | {
+          key: string;
+          type: "string";
+          fallbackValue?: string | null;
+      }
+    | {
+          key: string;
+          type: "number";
+          fallbackValue?: number | null;
+      };
 ```
 
 #### Result
 
 ```ts
 interface SyncResult {
-  created: SyncedTemplate[];
-  updated: SyncedTemplate[];
-  published: SyncedTemplate[];
-  errors: Array<{ name: string; error: Error }>;
+    created: SyncedTemplate[];
+    updated: SyncedTemplate[];
+    published: SyncedTemplate[];
+    errors: Array<{ name: string; error: Error }>;
 }
 
 interface SyncedTemplate {
-  id: string;
-  name: string;
-  alias: string | null;
+    id: string;
+    name: string;
+    alias: string | null;
 }
 ```
 
@@ -147,6 +175,7 @@ Template-level failures are collected in `errors` so the remaining templates can
 - Templates are never deleted from Resend.
 - Publishing is opt-in.
 - The package does not run live API tests against Resend.
+- Your application backend still sends emails through Resend; this package only syncs template definitions.
 
 ## Example
 
