@@ -17,30 +17,24 @@ if (!from) {
 
 const resend = new Resend(apiKey);
 
-const result = await sync(
+const result = await sync(resend, [
     {
-        resend,
-        publish: false,
-    },
-    [
-        {
-            name: "Welcome Email",
-            alias: "welcome-email",
-            component: WelcomeEmail,
-            props: {
-                name: "Ada",
-            },
-            subject: "Welcome to Acme",
-            from,
-            variables: [
-                {
-                    key: "CUSTOMER_NAME",
-                    type: "string",
-                    fallbackValue: "there",
-                },
-            ],
+        name: "Welcome Email",
+        alias: "welcome-email",
+        component: WelcomeEmail,
+        props: {
+            name: "Ada",
         },
-    ],
-);
+        subject: "Welcome to Acme",
+        from,
+        variables: [
+            {
+                key: "CUSTOMER_NAME",
+                type: "string",
+                fallbackValue: "there",
+            },
+        ],
+    },
+]);
 
 console.log(JSON.stringify(result, null, 2));

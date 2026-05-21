@@ -32,6 +32,8 @@ export interface SyncOptions {
     publish?: PublishMode;
 }
 
+export type SyncInput = Resend | SyncOptions;
+
 export interface SyncedTemplate {
     id: string;
     name: string;

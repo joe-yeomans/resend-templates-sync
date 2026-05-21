@@ -153,6 +153,28 @@ test("creates a missing template", async () => {
     ]);
 });
 
+test("accepts a Resend client directly", async () => {
+    const { resend, calls } = mockResend();
+
+    const result = await sync(resend, [
+        {
+            name: "Welcome Email",
+            component: WelcomeEmail,
+            props: { name: "Ada" },
+        },
+    ]);
+
+    assert.equal(calls.create.length, 1);
+    assert.deepEqual(result.created, [
+        {
+            id: "tpl_created",
+            name: "Welcome Email",
+            alias: null,
+        },
+    ]);
+    assert.deepEqual(result.published, []);
+});
+
 test("updates an existing template by alias before name", async () => {
     const { resend, calls } = mockResend({
         pages: [[{ id: "tpl_existing", name: "Old Welcome Name", alias: "welcome-email" }]],

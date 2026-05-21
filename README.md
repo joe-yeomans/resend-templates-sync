@@ -25,31 +25,25 @@ import WelcomeEmail from "./emails/welcome";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const result = await sync(
+const result = await sync(resend, [
     {
-        resend,
-        publish: false,
-    },
-    [
-        {
-            name: "Welcome Email",
-            alias: "welcome-email",
-            component: WelcomeEmail,
-            props: {
-                name: "Ada",
-            },
-            subject: "Welcome to Acme",
-            from: "Acme <hello@acme.com>",
-            variables: [
-                {
-                    key: "CUSTOMER_NAME",
-                    type: "string",
-                    fallbackValue: "there",
-                },
-            ],
+        name: "Welcome Email",
+        alias: "welcome-email",
+        component: WelcomeEmail,
+        props: {
+            name: "Ada",
         },
-    ],
-);
+        subject: "Welcome to Acme",
+        from: "Acme <hello@acme.com>",
+        variables: [
+            {
+                key: "CUSTOMER_NAME",
+                type: "string",
+                fallbackValue: "there",
+            },
+        ],
+    },
+]);
 
 console.log(result.created);
 console.log(result.updated);
@@ -81,15 +75,18 @@ curl -X POST "https://api.resend.com/emails" \
 
 ## API
 
-### `sync(options, templates)`
+### `sync(resendOrOptions, templates)`
 
 Creates or updates Resend templates from React Email components. This is usually run from a TypeScript script in CI, during deployment, or manually before releasing backend changes that depend on new email templates.
 
 ```ts
-await sync(options, templates);
+await sync(resend, templates);
+await sync({ resend, publish: true }, templates);
 ```
 
 #### Options
+
+The first argument can be an initialized Resend client, or an options object when you want to configure publishing.
 
 ```ts
 interface SyncOptions {

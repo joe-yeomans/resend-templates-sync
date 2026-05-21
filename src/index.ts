@@ -1,7 +1,13 @@
 import { render } from "@react-email/render";
 import React from "react";
 import type { Resend } from "resend";
-import type { SyncOptions, SyncResult, SyncedTemplate, TemplateConfig } from "./types.js";
+import type {
+    SyncInput,
+    SyncOptions,
+    SyncResult,
+    SyncedTemplate,
+    TemplateConfig,
+} from "./types.js";
 
 interface ExistingTemplate {
     id: string;
@@ -9,7 +15,12 @@ interface ExistingTemplate {
     alias: string | null;
 }
 
-export async function sync(options: SyncOptions, templates: TemplateConfig[]): Promise<SyncResult> {
+export async function sync(resend: Resend, templates: TemplateConfig[]): Promise<SyncResult>;
+export async function sync(options: SyncOptions, templates: TemplateConfig[]): Promise<SyncResult>;
+export async function sync(input: SyncInput, templates: TemplateConfig[]): Promise<SyncResult> {
+    const options = toSyncOptions(input);
+    const { resend, publish } = options;
+
     const result: SyncResult = {
         created: [],
         updated: [],
@@ -17,7 +28,7 @@ export async function sync(options: SyncOptions, templates: TemplateConfig[]): P
         errors: [],
     };
 
-    const existingTemplates = await listTemplates(options.resend);
+    const existingTemplates = await listTemplates(resend);
 
     for (const template of templates) {
         try {
@@ -27,7 +38,7 @@ export async function sync(options: SyncOptions, templates: TemplateConfig[]): P
             const existingTemplate = findExistingTemplate(existingTemplates, template);
 
             if (existingTemplate) {
-                const response = await options.resend.templates.update(existingTemplate.id, {
+                const response = await resend.templates.update(existingTemplate.id, {
                     html,
                     subject: template.subject,
                     text: template.text,
@@ -49,11 +60,11 @@ export async function sync(options: SyncOptions, templates: TemplateConfig[]): P
 
                 result.updated.push(syncedTemplate);
 
-                if (shouldPublish(options.publish, "updated")) {
-                    await publishTemplate(options.resend, syncedTemplate, result);
+                if (shouldPublish(publish, "updated")) {
+                    await publishTemplate(resend, syncedTemplate, result);
                 }
             } else {
-                const response = await options.resend.templates.create({
+                const response = await resend.templates.create({
                     name: template.name,
                     html,
                     subject: template.subject,
@@ -72,8 +83,8 @@ export async function sync(options: SyncOptions, templates: TemplateConfig[]): P
 
                 result.created.push(syncedTemplate);
 
-                if (shouldPublish(options.publish, "created")) {
-                    await publishTemplate(options.resend, syncedTemplate, result);
+                if (shouldPublish(publish, "created")) {
+                    await publishTemplate(resend, syncedTemplate, result);
                 }
             }
         } catch (error) {
@@ -85,6 +96,18 @@ export async function sync(options: SyncOptions, templates: TemplateConfig[]): P
     }
 
     return result;
+}
+
+function toSyncOptions(input: SyncInput): SyncOptions {
+    if (isSyncOptions(input)) {
+        return input;
+    }
+
+    return { resend: input };
+}
+
+function isSyncOptions(input: SyncInput): input is SyncOptions {
+    return typeof input === "object" && input !== null && "resend" in input;
 }
 
 async function listTemplates(resend: Resend): Promise<ExistingTemplate[]> {
